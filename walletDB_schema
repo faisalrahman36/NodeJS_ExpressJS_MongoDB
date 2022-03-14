@@ -1,0 +1,21 @@
+walletDB schema
+
+Models
+
+users 
+
+email,password,name,walletAddress,CNIC,balance,balanceLowerLimit,balanceLocked,currency,role, active,longitude,latitude,createDateTime
+
+transactions
+
+from, to, amount, currency orderDescription, createDatetime
+
+scheduledTransactions
+
+from, to, amount, currency, orderDescription, status, scheduledDateTime, createDatetime
+
+
+
+
+
+
