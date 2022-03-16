@@ -1,0 +1,16 @@
+//Use the insertOne method with some suitable parameter values to create a master wallet account  
+db.users.insertOne({
+    "name" : "Company",
+    "email" : "master@Company.com",
+    "password" : "$2a$10$oAG3ZcsXEZSMJg5MNV4wpuqf8JFgerfAhTZV/SJT8zVgemHAJLaHe",
+    "walletAddress" : "622fd9d4a8f1f2eb0e48c1ff",
+    "balance" : 0,
+    "balanceLowerLimit" : 0,
+    "balanceLocked" : 0,
+    "currency" : "Rs",
+    "role" : "master",
+    "active" : true,
+    "Longitude" : -1,
+    "Latitude" : -1,
+    "isVerified" : true,
+    "CreateDate" : ISODate("2022-03-15T00:12:04.892Z")})
