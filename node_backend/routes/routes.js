@@ -297,10 +297,10 @@ router.get("/verify/:id/:token",  (req, res) => {
 
 
 // show transactions
-router.get('/showTransactions',function(req, res) {
-
+router.get('/showTransactions/:walletAddress',function(req, res) {
+    console.log('show txn',req.body);
     //will return transactions involving the user's wallet address in either from or too
-    transactionObj.find({$or:[{from: req.body.walletAddress},{to:req.body.walletAddress}]}, function(err, user) 
+    transactionObj.find({$or:[{from: req.params.walletAddress},{to:req.params.walletAddress}]}, function(err, user) 
     {
        if (err)
        {
@@ -313,10 +313,10 @@ router.get('/showTransactions',function(req, res) {
    });
       
 // show scheduled transactions
-router.get('/showScheduledTransactions',function(req, res) {
+router.get('/showScheduledTransactions/:walletAddress',function(req, res) {
 
     //will return transactions involving the user's wallet address in  from  
-    scheduledTransactionObj.find({from:req.body.walletAddress}, function(err, user) 
+    scheduledTransactionObj.find({from:req.params.walletAddress}, function(err, user) 
     {
        if (err)
        {
