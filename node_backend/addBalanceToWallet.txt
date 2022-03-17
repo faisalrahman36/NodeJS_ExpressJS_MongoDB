@@ -1,0 +1,8 @@
+//In order to add balance to any wallet, we can use the method below:
+db.users.findOneAndUpdate({walletAddress: "6230f4e56533456d85efa900"}, {$set: {balance:100000, balanceLowerLimit:10000}}, 
+{upsert: true}, function(err,doc) {
+       if (err) { throw err; }
+       else { console.log("Updated"); }
+     });  
+
+//change values based on your data
