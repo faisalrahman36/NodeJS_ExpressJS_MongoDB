@@ -8,11 +8,12 @@ email,password,name,walletAddress,CNIC,balance,balanceLowerLimit,balanceLocked,c
 
 transactions
 
-from, to, amount, currency orderDescription, createDatetime
+from, to, amount, currency orderDescription,transactionType, createDatetime
 
 scheduledTransactions
 
-from, to, amount, currency, orderDescription, status, scheduledDateTime, createDatetime
+from, to, amount, currency, orderDescription, status, transactionType,scheduledDateTime, createDatetime
+
 
 
 

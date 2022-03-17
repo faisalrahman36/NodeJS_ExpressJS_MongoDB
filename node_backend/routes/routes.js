@@ -11,6 +11,9 @@ const mongo=require("mongodb");
 const keys=require("../config/keys.js");
 const sendEmail = require("../utils/sendEmail");
 const tokenObj = require("../models/token");
+const transactionObj=require("../models/transactions");
+const scheduledTransactionObj=require("../models/scheduledTransactions");
+
 // @route POST api/users/register
 // @desc Register user
 // @access Public
@@ -98,6 +101,250 @@ router.get("/verify/:id/:token",  (req, res) => {
     }
   });
 
+//transaction
+  router.post("/transaction/:id", (req, res) => {
+    
+    console.log('id',req.params.id);
+    console.log('amount',parseFloat(req.body.amount));
+    console.log('res body',req.body);
+
+    //from user debit
+    User.findById({ _id: req.params.id }, (err, account) => {
+        if (err) {
+          console.log(err);
+        }
+    
+        console.log(account.email);
+        let match;
+        if(req.body.email== account.email)
+          {
+          match=true;
+          }
+        
+          if (req.body.amount>=account.balance){
+           match=false;
+           console.log("not enough balance");
+           res.status(500).send("not enough balance");
+          }
+
+    
+          if (match) {
+            let query = { _id: req.params.id };
+            User.findByIdAndUpdate(
+              query,
+              {
+                balance:  parseFloat(account.balance)-parseFloat(req.body.amount)
+              },
+              err => {
+                if (err) {
+                  console.log(err);
+                }
+                console.log("Debit successful!");
+              }
+            );
+
+            console.log("balance-amount",(parseFloat(account.balance)-parseFloat(req.body.amount)),parseFloat(account.balanceLowerLimit));
+            
+           if ((parseFloat(account.balance)-parseFloat(req.body.amount))<= parseFloat(account.balanceLowerLimit)){
+               //low balance reminder
+               const message = 'low balance alert';
+               sendEmail(account.email, "low balance", message)
+
+           }       
+          
+            let queryTo = { "walletAddress": req.body.toWalletAddress };
+            User.findOneAndUpdate(
+              queryTo,
+              {
+                $inc:{balance:  parseFloat(req.body.amount)}}
+              ,
+              err => {
+                if (err) {
+                  console.log(err);
+                }
+                console.log("Credit successful!");
+              }
+            );
+    
+
+            let transaction = new transactionObj({
+              transactionType: req.body.transactionType,
+              to: req.body.toWalletAddress,
+              from: req.body.walletAddress,
+              amount: req.body.amount,
+              orderDescription: req.body.orderDescription,
+              currency: req.body.currency
+            });
+            transaction.save(err => {
+              if (err) {
+                console.log(err);
+              }
+              console.log("Transaction saved!");
+            });
+    
+            res.send(
+              200,
+              'Transfer successful!'
+            );
+          } else {
+            res.send(
+              500,
+              " Please try again."
+            );
+          }
+        
+      });
+    });
+    // scheduled transactions
+
+    router.post("/scheduledTransaction/:id", (req, res) => {
+    
+        console.log('id',req.params.id);
+        console.log('amount',parseFloat(req.body.amount));
+        console.log('res body',req.body);
+
+    
+        //from user debit
+        User.findById({ _id: req.params.id }, (err, account) => {
+            if (err) {
+              console.log(err);
+            }
+        
+            console.log(account.email);
+            let match;
+            if(req.body.email== account.email)
+              {
+              match=true;
+              }
+            
+              if (req.body.amount>=account.balance){
+               match=false;
+               console.log("not enough balance");
+               res.status(500).send("not enough balance");
+              }
+    
+        
+              if (match) {
+                let query = { _id: req.params.id };
+                User.findByIdAndUpdate(
+                  query,
+                  {
+                    balance:  parseFloat(account.balance)-parseFloat(req.body.amount)
+                  },
+                  err => {
+                    if (err) {
+                      console.log(err);
+                    }
+                    console.log("Debit successful!");
+                  }
+                );
+    
+                console.log("balance-amount",(parseFloat(account.balance)-parseFloat(req.body.amount)),parseFloat(account.balanceLowerLimit));
+                
+               if ((parseFloat(account.balance)-parseFloat(req.body.amount))<= parseFloat(account.balanceLowerLimit)){
+                   //low balance reminder
+                   const message = 'low balance after scheduled transaction ';
+                   sendEmail(account.email, "low balance", message)
+    
+               }       
+              //balance won't be transfered but locked into the users own account
+                let queryTo = { _id: req.params.id };
+                User.findOneAndUpdate(
+                  queryTo,
+                  {
+                    $inc:{balanceLocked:  parseFloat(req.body.amount)}}
+                  ,
+                  err => {
+                    if (err) {
+                      console.log(err);
+                    }
+                    console.log("Credit successful!");
+                  }
+                );
+        
+    
+                let scheduledTransaction = new scheduledTransactionObj({
+                  transactionType: req.body.transactionType,
+                  to: req.body.toWalletAddress,
+                  from: req.body.walletAddress,
+                  amount: req.body.amount,
+                  orderDescription: req.body.orderDescription,
+                  currency: req.body.currency,
+                  status:"scheduled",
+                  scheduledDateTime: req.body.scheduledDateTime
+
+                });
+                scheduledTransaction.save(err => {
+                  if (err) {
+                    console.log(err);
+                  }
+                  console.log("Scheduled transaction saved!");
+                });
+        
+                res.send(
+                  200,
+                  'Transfer successful!'
+                );
+              } else {
+                res.send(
+                  500,
+                  " Please try again."
+                );
+              }
+            
+          });
+        });
+
+
+// show transactions
+router.get('/showTransactions',function(req, res) {
+
+    //will return transactions involving the user's wallet address in either from or too
+    transactionObj.find({$or:[{from: req.body.walletAddress},{to:req.body.walletAddress}]}, function(err, user) 
+    {
+       if (err)
+       {
+           res.send(err);
+       }
+       console.log(user);
+       res.json(user);
+   
+    });
+   });
+      
+// show scheduled transactions
+router.get('/showScheduledTransactions',function(req, res) {
+
+    //will return transactions involving the user's wallet address in  from  
+    scheduledTransactionObj.find({from:req.body.walletAddress}, function(err, user) 
+    {
+       if (err)
+       {
+           res.send(err);
+       }
+       console.log(user);
+       res.json(user);
+   
+    });
+   });
+      
+
+// show user info
+router.get('/user/:id',function(req, res) {
+
+  //will return transactions involving the user's wallet address in  from  
+  User.find({_id:req.params.id}, function(err, user) 
+  {
+     if (err)
+     {
+         res.send(err);
+     }
+     console.log(user);
+     res.json(user);
+ 
+  });
+ });
+    
 // @route POST api/users/login
 // @desc Login user and return JWT token
 // @access Public
@@ -128,7 +375,8 @@ router.post("/login", (req, res) => {
             name: user.name,
             walletAddress:user.walletAddress,
             email: user.email,
-            role: user.role
+            role: user.role,
+            currency:user.currency
           };// Sign token
           jwt.sign(
             payload,
