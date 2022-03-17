@@ -4,7 +4,7 @@ Models
 
 users 
 
-email,password,name,walletAddress,CNIC,balance,balanceLowerLimit,balanceLocked,currency,role, active,longitude,latitude,createDateTime
+email,password,name,walletAddress,balance,balanceLowerLimit,balanceLocked,currency,role, active,longitude,latitude,createDateTime
 
 transactions
 
