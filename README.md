@@ -1,6 +1,6 @@
 # NodeJS_ExpressJS_MongoDB
 
-This is a basic back-end App for :https://github.com/faisalrahman36/react_frontend
+This is a basic demo back-end App for :https://github.com/faisalrahman36/react_frontend
 
 References and useful links:
 
